@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 using ZedGraph;
 
 namespace LookSin
@@ -33,6 +35,8 @@ namespace LookSin
         /// </summary>
         private static RollingPointPairList rollingPoint;
 
+
+        private static double num_look_point = 0;
         /// <summary>
         /// Конструктор принимает на вход частоту дискретизации т.е. с каким шагом будет производиться отрисовка графика
         /// и вторым параметром принимает на вход панель zedgraph.panel для возможности отрисовки
@@ -58,36 +62,46 @@ namespace LookSin
             ZedGraphControl.AxisChange();
             // Обновляем график
             ZedGraphControl.Invalidate();
-            
+
+            DrawGraph.num_look_point = num_look_point;
+
+
         }
 
 
-        static double _currentx = 0;
-        public void Do_Dinamik_DrawGraph() 
+
+        double xmin;
+        double xmax;
+        public void Do_Dinamik_DrawGraph(double [] x, double [] y, double _step) 
         {
-            // Вычислим новое значение
-            //double newValue = 10 * Math.Sin(_currentx * 3);
-
-            // !!! Добавим новый отсчет к данным
-            for(int i = 0; i < 50;i++) 
+            if((x.Length == y.Length) && x != null && y != null && _step > 0)
             {
-                rollingPoint.Add(_currentx, 10 * Math.Sin(_currentx * 3));
-                _currentx += 0.1;
+
+                rollingPoint.Add(x, y);
+                // Рассчитаем интервал по оси X, который нужно отобразить на графике
+                if ((x[39] - num_look_point * _step) <= 0) xmin = 0;
+                else if ((x[39] - num_look_point * _step) > 0) xmin = (x[39] - num_look_point * _step);
+
+                xmax = x[39];
+
+                panel.XAxis.Scale.Min = xmin;
+                panel.XAxis.Scale.Max = xmax;
+                //panel.YAxis.Scale.Min = y.Min();
+                //panel.YAxis.Scale.Max = y.Max();
+                //MessageBox.Show($"Минимальное {xmin}\r\n" +
+                //    $"Максимальное {xmax} \r\n" +
+                //    $"По y min {y.Min()}\r\n" +
+                //    $"По y max {y.Max()}\r\n");
+                // Обновим оси
+                ZedGraphControl.AxisChange();
+
+                // Обновим сам график
+                ZedGraphControl.Invalidate();
             }
-
-
-            // Рассчитаем интервал по оси X, который нужно отобразить на графике
-            double xmin = _currentx - 100 * 0.1;
-            double xmax = _currentx;
-
-            panel.XAxis.Scale.Min = xmin;
-            panel.XAxis.Scale.Max = xmax;
-
-            // Обновим оси
-            ZedGraphControl.AxisChange();
-
-            // Обновим сам график
-            ZedGraphControl.Invalidate();
+            else
+            {
+                //TODO: Вывести сообщение о том, что массивы не соответствуют по длине либо один из массивов равен null
+            }
         }
     }
 }
